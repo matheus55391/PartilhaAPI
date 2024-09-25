@@ -1,7 +1,5 @@
 # PartilhaAPI
 
-## Descrição
-
 O **PartilhaAPI** é um aplicativo projetado para facilitar a divisão de contas entre amigos. Semelhante ao Split Wise, o aplicativo permite que os usuários cadastrem amigos, registrem transações e acompanhem quanto cada um deve.
 
 ## Funcionalidades
