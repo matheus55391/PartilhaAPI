@@ -18,6 +18,13 @@ namespace PartilhaAPI.Models
         [MaxLength(255)]
         public string Email { get; set; }
 
+        [Required]
+        [MaxLength(255)]
+        public string FirebaseUid { get; set; }
+
+        [Required]
+        public Guid FriendCode { get; set; }
+
         // Navigation properties
         public virtual ICollection<Friend> Friends { get; set; }
         public virtual ICollection<Transaction> TransactionsCreated { get; set; }
