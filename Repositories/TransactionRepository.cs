@@ -1,11 +1,6 @@
 using PartilhaAPI.Data;
-
 using Microsoft.EntityFrameworkCore;
-using PartilhaAPI.Data;
 using PartilhaAPI.Models;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace PartilhaAPI.Repositories
 {
@@ -26,12 +21,20 @@ namespace PartilhaAPI.Repositories
 
         public async Task<IEnumerable<Transaction>> GetAllTransactionsAsync()
         {
-            return await _context.Transactions.Include(t => t.Members).ToListAsync();
+            return await _context.Transactions
+                .Include(t => t.CreatedBy)    // Inclui o usuário que criou a transação
+                .Include(t => t.PaidBy)      // Inclui o usuário que pagou a transação
+                .Include(t => t.Members)     // Inclui os membros da transação
+                .ToListAsync();
         }
 
         public async Task<Transaction> CreateTransactionAsync(Transaction transaction)
         {
             _context.Transactions.Add(transaction);
+            if (transaction.Members != null && transaction.Members.Count > 0)
+            {
+                _context.TransactionMembers.AddRange(transaction.Members);
+            }
             await _context.SaveChangesAsync();
             return transaction;
         }

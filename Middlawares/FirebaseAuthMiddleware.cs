@@ -46,11 +46,7 @@ namespace PartilhaAPI.Middleware
         {
             // Verifica se a rota atual requer autorização
             var endpoint = context.GetEndpoint();
-            if (endpoint != null)
-            {
-                return endpoint.Metadata.GetMetadata<IAuthorizeData>() != null;
-            }
-            return false;
+            return endpoint?.Metadata.GetMetadata<IAuthorizeData>() != null;
         }
 
         private async Task<bool> ValidateFirebaseTokenAsync(HttpContext context)
@@ -67,6 +63,7 @@ namespace PartilhaAPI.Middleware
             {
                 // Valida o token Firebase
                 var decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(token);
+                var firebaseUid = decodedToken.Uid;
 
                 // Crie um escopo para resolver IUserService
                 using (var scope = _serviceProvider.CreateScope())
@@ -74,26 +71,23 @@ namespace PartilhaAPI.Middleware
                     var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
 
                     // Verifica se o usuário já existe no banco de dados
-                    var user = await userService.FindByFirebaseUidAsync(decodedToken.Uid);
+                    var user = await userService.FindByFirebaseUidAsync(firebaseUid);
                     if (user == null)
                     {
                         // Se o usuário não existir, crie um novo usuário
                         user = new User
                         {
-                            FirebaseUid = decodedToken.Uid,
-                            Name = decodedToken.Claims["name"].ToString() ?? "Unnamed", // Se o nome estiver disponível
-                            Email = decodedToken.Claims["email"].ToString() // Se o email estiver disponível
+                            FirebaseUid = firebaseUid,
+                            Name = decodedToken.Claims.ContainsKey("name") ? decodedToken.Claims["name"].ToString() : "Unnamed",
+                            Email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString() : string.Empty
                         };
 
                         user = await userService.CreateUserAsync(user);
                     }
 
-                    // Configure o usuário no contexto
-                    context.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-                    {
-                        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // UID do usuário
-                        new Claim(ClaimTypes.Email, user.Email) // Email do usuário
-                    }, "Firebase"));
+                    // Adiciona o usuário e FirebaseUid ao HttpContext.Items
+                    context.Items["User"] = user;
+                    context.Items["FirebaseUid"] = firebaseUid;
                 }
 
                 return true; // Token válido

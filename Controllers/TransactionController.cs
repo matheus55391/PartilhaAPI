@@ -12,7 +12,7 @@ namespace PartilhaAPI.Controllers
     [Route("api/[controller]")]
     [Authorize]
     [ApiController]
-    public class TransactionsController : ControllerBase
+    public class TransactionsController : BaseController
     {
         private readonly ITransactionService _transactionService;
 
@@ -33,7 +33,7 @@ namespace PartilhaAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<Transaction>> CreateTransaction([FromBody] CreateTransactionDto transactionDto)
         {
-            var createdTransaction = await _transactionService.CreateTransactionAsync(transactionDto);
+            var createdTransaction = await _transactionService.CreateTransactionAsync(transactionDto, LoggedUser);
             return CreatedAtAction(nameof(GetAllTransactions), new { id = createdTransaction.Id }, createdTransaction);
         }
     }
